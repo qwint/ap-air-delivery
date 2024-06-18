@@ -27,7 +27,7 @@ json_world = {
             "climber delivery": ["climber cargo"], #gives claw, needs free letter in main
             "climber chat": None,
             "climber cargo": None, #all the way to the right
-            "friend freight": ["claw"], # OR fly  #in town, above
+            "friend freight": "claw OR fly", # OR fly  #in town, above
             "mayor missive": ["claw"], #top path from ladder to under
             "buried bento": ["drill", "claw"], #middle path from ladder to under
         },
@@ -144,6 +144,8 @@ class HelloWorld(World):
 
     def create_rule(self, rule: Any) -> Callable[[CollectionState], bool]:
         #current black box to convert json_world rule format to an access_rule lambda
+        if rule == "claw OR fly":
+            return lambda state: state.has_any(["claw", "fly"], self.player)
         return lambda state: state.has_all(rule, self.player)
         #currently all my rule objects are None or a list of required items
 

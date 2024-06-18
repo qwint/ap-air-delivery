@@ -18,6 +18,31 @@ h1 {
 	text-decoration-color: white;
 }
 
+.default-hidden {
+	display: none;
+}
+
+.submit-wrapper {
+	display: flex;
+	flex-direction: row;
+	justify-content: center;
+}
+
+.status-wrapper {
+	width: 150px;
+
+}
+
+#status-connected {
+	color: green;
+}
+#status-failed {
+	color: red;
+}
+#status-connecting {
+	color: green;
+}
+
 .gpio_values {
 	margin-top: 1rem;
 	display: -webkit-box;
@@ -175,7 +200,14 @@ canvas{
 
 			<label for="fname">Name:</label>
 			<input type="text" id="Name" name="Name"><br><br>
-			<input type="submit" value="Submit">
+			<div class="submit-wrapper">
+				<input type="submit" value="Submit">
+				<div class="status-wrapper">
+					<div id="status-connected" class="default-hidden">Connected</div>
+					<div id="status-failed" class="default-hidden">Connection Failed</div>
+					<div id="status-connecting" class="default-hidden">Connecting...</div>
+				</div>
+			</div>
 		</form>
 	</div></center>
 	<br><br>
@@ -294,14 +326,23 @@ canvas{
 	        console.log(connectionInfo.port)
 	        console.log(connectionInfo.name)
 
+
+	        document.getElementById("status-connected").classList.add("default-hidden")
+	        document.getElementById("status-failed").classList.add("default-hidden")
+
+	        document.getElementById("status-connecting").classList.remove("default-hidden")
         	client
 	            .connect(connectionInfo)
 	            .then(() => {
 	                console.log("Connected to the server");
+	        		document.getElementById("status-connecting").classList.add("default-hidden")
+	                document.getElementById("status-connected").classList.remove("default-hidden")
 	                // You are now connected and authenticated to the server. You can add more code here if need be.
 	            })
 	            .catch((error) => {
 	                console.error("Failed to connect:", error);
+	        		document.getElementById("status-connecting").classList.add("default-hidden")
+	                document.getElementById("status-failed").classList.remove("default-hidden")
 	                // Handle the connection error.
 	            });
         });
