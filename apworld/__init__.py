@@ -98,7 +98,7 @@ class HelloWeb(WebWorld):
         "setup",
         "description here",
         "en",
-        "setup_en.md",
+        "docs/setup_en.md",
         "setup/en",
         ["your name here"]
     )
