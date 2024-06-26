@@ -93,14 +93,14 @@ class TemplateLocation(Location):
     game = json_world["game_name"]
 
 
-class HelloWeb(WebWorld):
+class DeliveryWeb(WebWorld):
     setup_en = Tutorial(
         "setup",
-        "description here",
+        "A guide for setting up Air Delivery for AP",
         "en",
         "docs/setup_en.md",
         "setup/en",
-        ["your name here"]
+        ["qwint"]
     )
     tutorials = [setup_en]
 
@@ -109,9 +109,13 @@ class HelloWeb(WebWorld):
 location_list = [location for locations in json_world["location_map"].values() for location in locations.keys()]
 item_list = [item for item_lists in json_world["items"].values() for item in item_lists]
 
-class HelloWorld(World):
+
+class DeliveryWorld(World):
+    """
+    You’re a sky-island delivery worker delivering mail to all the nearby islands. Everything runs smoothly until the letters suddenly aren’t being delivered. Find all of the letters and deliver them to their recipients. Maybe they’ll give you something as a thank you.
+    """
     game = json_world["game_name"]
-    web = HelloWeb()
+    web = DeliveryWeb()
     location_name_to_id = {name: json_world["base_id"]+location_list.index(name) for name in location_list}
     item_name_to_id = {name: json_world["base_id"]+item_list.index(name) for name in item_list}
 
