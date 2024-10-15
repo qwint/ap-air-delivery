@@ -118,6 +118,25 @@ class DeliveryWorld(World):
     web = DeliveryWeb()
     location_name_to_id = {name: json_world["base_id"]+location_list.index(name) for name in location_list}
     item_name_to_id = {name: json_world["base_id"]+item_list.index(name) for name in item_list}
+    item_name_groups = {
+        "Packages": {
+            "mayor missive",
+            "friend freight",
+            "climber cargo",
+            "driller dispatch",
+            "paper pack",
+            "buried bento",
+            "grandpa goods",
+            "history haul",
+            "wife word",
+            },
+        "Tools": {
+            "claw",
+            "fly",
+            "key",
+            "drill",
+            }
+    }
 
 #basic getters for json_world data, any option based modifications can be done here; may cache these later
 #expect authors to modify the return of super() per options, or fully override if their format is different
