@@ -106,10 +106,7 @@ canvas{
     <script type="module">
         import {
             Client,
-            ITEMS_HANDLING_FLAGS,
-            SERVER_PACKET_TYPE,
-            CLIENT_STATUS ,
-        } from "https://unpkg.com/archipelago.js@1.0.0/dist/archipelago.js";
+        } from "https://unpkg.com/archipelago.js@2.0.0-rc4/dist/index.js";
 
         // Create a new Archipelago client
         const client = new Client();
@@ -166,19 +163,10 @@ canvas{
 		}
 		const base_id = 19827412012
 
-        // Set up event listeners
-        client.addListener(SERVER_PACKET_TYPE.CONNECTED, (packet) => {
-            console.log("Connected to server: ", packet);
-        });
-
-        client.addListener(SERVER_PACKET_TYPE.ROOM_UPDATE, (packet) => {
-            console.log("Room update: ", packet);
-        });
-
         //add item handler for gpio layer
-		client.addListener(SERVER_PACKET_TYPE.RECEIVED_ITEMS, (packet, message) => {
+		client.items.on("itemsReceived", (items, index) => {
 			//if this is a sync packet reset all our item addresses without changing anything else
-			if (packet.index == 0) {
+			if (index == 0) {
 				for (let flag in item_flags) {
 					gpio[item_flags[flag][0]] &= (~item_flags[flag][1] << 28 >>> 28)
 				}
@@ -187,9 +175,9 @@ canvas{
 			//on the scale i expect pico-8 games to be, this will be good enough
 			for (let flag in item_flags) {
 				if (!(gpio[item_flags[flag][0]] & item_flags[flag][1])) {
-					for (let i=0; i<packet.items.length; i++) {
-						let item = packet.items[i]
-						if (base_id + item_flags[flag][2] === item.item) {
+					for (let i=0; i<items.length; i++) {
+						let item = items[i]
+						if (base_id + item_flags[flag][2] === item.id) {
 							console.log(`adding item ${flag}`)
 							gpio[item_flags[flag][0]] |= item_flags[flag][1]
 						}
@@ -200,21 +188,14 @@ canvas{
         // Connect to the Archipelago server
         form.addEventListener("submit", (event) => {
         	event.preventDefault()
-	        const connectionInfo = {
-	            hostname: document.getElementById("Hostname").value,
-	            port: Number(document.getElementById("Port").value),
-	            game: "Air Delivery",
-	            name: document.getElementById("Name").value,
-	            items_handling: ITEMS_HANDLING_FLAGS.REMOTE_ALL,
-	            version: {
-	            	build: 0,
-	            	major: 4,
-	            	minor: 6,
-	            },
-	        };
-	        console.log(connectionInfo.hostname)
-	        console.log(connectionInfo.port)
-	        console.log(connectionInfo.name)
+	        const url = document.getElementById("Hostname").value + ":" + document.getElementById("Port").value
+	        const slot = document.getElementById("Name").value
+	        // const conn_options = {
+	        // 	items: default
+	        // 	password: not implemented yet lol
+	        // }
+	        console.log(url)
+	        console.log(slot)
 
 
 	        document.getElementById("status-connected").classList.add("default-hidden")
@@ -222,7 +203,7 @@ canvas{
 
 	        document.getElementById("status-connecting").classList.remove("default-hidden")
         	client
-	            .connect(connectionInfo)
+        		.login(url, slot, "Air Delivery") //, conn_options)
 	            .then(() => {
 	                console.log("Connected to the server");
 	        		document.getElementById("status-connecting").classList.add("default-hidden")
@@ -252,9 +233,9 @@ canvas{
 			for (let loc in loc_flags) {
 				if ((gpio[loc_flags[loc][0]] & loc_flags[loc][1]) !== 0) {
 					if (loc === "victory") {
-						client.updateStatus(CLIENT_STATUS.GOAL)
+						client.goal()
 					} else {
-						client.locations.check(base_id + loc_flags[loc][2])
+						client.check(base_id + loc_flags[loc][2])
 					}
 				}
 			}
