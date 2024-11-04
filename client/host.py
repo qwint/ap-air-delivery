@@ -7,7 +7,7 @@ PORT = 80
 class Handler(http.server.SimpleHTTPRequestHandler):
     def do_GET(self):
         print(self.path)
-        if self.path in ["/", "/pico-window.js", "/pico8-gpio-listener.js", "/index.js"]:
+        if self.path.startswith("/?") or self.path in ["/", "/pico-window.js", "/pico8-gpio-listener.js", "/index.js"]:
             super().do_GET()
 
 

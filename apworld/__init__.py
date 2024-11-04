@@ -1,5 +1,10 @@
 from BaseClasses import Region, Location, Item, ItemClassification, Tutorial, CollectionState
 from worlds.AutoWorld import World, WebWorld
+from worlds.LauncherComponents import (
+    Component,
+    components,
+    Type as component_type,
+    )
 #expand this eventually
 from typing import *
 
@@ -83,6 +88,20 @@ json_world = {
     "game_name": "Air Delivery",
     "filler_name": "Feeling of Satisfaction"
 }
+
+
+def open_page(url):
+    import webbrowser
+    webbrowser.open(f"https://qwint.github.io/air_delivery/?Protocol={url}&auto=True")
+
+
+components.append(Component(
+    "Air Delivery AutoLaunch",
+    func=open_page,
+    component_type=component_type.HIDDEN,
+    supports_uri=True,
+    game_name="Air Delivery"
+    ))
 
 
 class TemplateItem(Item):

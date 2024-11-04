@@ -108,6 +108,26 @@ canvas{
             Client,
         } from "https://unpkg.com/archipelago.js@2.0.0-rc4/dist/index.js";
 
+        // https://stackoverflow.com/a/71574505
+        var params = window.location.search.slice(1).split("&");
+        //convert the params to an object
+        var data = params.reduce((obj, param) => {
+          var pair = param.split("=");
+          return { ...obj,
+            [pair[0]]: decodeURIComponent(pair[1])
+          }
+        }, {});
+        //console.log({data});
+        //insert values by matching input name to data object key
+        const fillable_forms = ["Hostname", "Port", "Name"]
+        for (var index in fillable_forms) {
+            const key = fillable_forms[index]
+            if (key in data) {
+                document.getElementById(key).value = data[key]
+            }
+        }
+        // document.querySelectorAll("input").forEach(input => input.value = data[input.name]);
+
         // Create a new Archipelago client
         const client = new Client();
         const form = document.getElementById("connection_details")
@@ -228,14 +248,21 @@ canvas{
             }
         });
         // Connect to the Archipelago server
-        form.addEventListener("submit", (event) => {
-            event.preventDefault()
-            const url = document.getElementById("Hostname").value + ":" + document.getElementById("Port").value
-            const slot = document.getElementById("Name").value
-            // const conn_options = {
-            //     items: default
-            //     password: not implemented yet lol
-            // }
+        function connect_to_server(event) {
+            if (event !== null) {
+                event.preventDefault()
+            }
+            var url = document.getElementById("Hostname").value + ":" + document.getElementById("Port").value
+            var slot = document.getElementById("Name").value
+            var conn_options = {
+                password: null
+            }
+            if ("Protocol" in data) {
+                var pro = data["Protocol"].split("://").pop().split("@")
+                url = pro[1]
+                slot = pro[0].split(":")[0]
+                conn_options["password"] = pro[0].split(":")[1]
+            }
             console.log(url)
             console.log(slot)
 
@@ -245,7 +272,7 @@ canvas{
 
             document.getElementById("status-connecting").classList.remove("default-hidden")
             client
-                .login(url, slot, "Air Delivery") //, conn_options)
+                .login(url, slot, "Air Delivery", conn_options)
                 .then(() => {
                     console.log("Connected to the server");
                     document.getElementById("status-connecting").classList.add("default-hidden")
@@ -258,12 +285,8 @@ canvas{
                     document.getElementById("status-failed").classList.remove("default-hidden")
                     // Handle the connection error.
                 });
-        });
-
-        function connect() {
-            
-
         }
+        form.addEventListener("submit", connect_to_server);
 
         // Disconnect from the server when unloading window.
         // window.addEventListener("beforeunload", () => {
@@ -282,6 +305,10 @@ canvas{
                 }
             }
         });
+        if (data["auto"] === "True") {
+            console.log("autoconnecting")
+            connect_to_server(null)
+        }
 
 
     </script>
