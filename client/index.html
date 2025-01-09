@@ -23,9 +23,7 @@ h1 {
 }
 
 .submit-wrapper {
-    display: flex;
-    flex-direction: row;
-    justify-content: center;
+    display: table-cell;
 }
 
 .status-wrapper {
@@ -41,6 +39,12 @@ h1 {
 }
 #status-connecting {
     color: green;
+}
+#chat {
+    overflow-y: auto;
+    height: 20ch;
+    border: solid;
+    border-block-color: black;
 }
 
 
@@ -106,7 +110,7 @@ canvas{
     <script type="module">
         import {
             Client,
-        } from "https://unpkg.com/archipelago.js@2.0.0-rc4/dist/index.js";
+        } from "https://unpkg.com/archipelago.js@2.0.2/dist/index.js";
 
         // https://stackoverflow.com/a/71574505
         var params = window.location.search.slice(1).split("&");
@@ -130,6 +134,74 @@ canvas{
 
         // Create a new Archipelago client
         const client = new Client();
+
+        // start chat from phar
+        client.messages.on("message", onMessage);
+
+        function onMessage(text, nodes) {
+            // Plaintext to console, because why not?
+            console.log(text);
+
+            const chat = document.getElementById("chat");
+            const messageElement = document.createElement("div");
+
+            for (const node of nodes) {
+                const nodeElement = document.createElement("span");
+                nodeElement.innerText = node.text;
+
+                switch (node.type) {
+                    case "entrance":
+                        nodeElement.style.color = "#6495ED";
+                        break;
+
+                    case "location":
+                        nodeElement.style.color = "#00FF7F";
+                        break;
+
+                    case "color":
+                        // not really correct, but technically the only color nodes the server returns is "green" or "red"
+                        // so it's fine enough for an example.
+                        nodeElement.style.color = node.color;
+                        break;
+
+                    case "player":
+                        if (node.player.slot === client.players.self.slot) {
+                            // It's us!
+                            nodeElement.style.color = "#EE00EE";
+                        } else {
+                            // It's them!
+                            nodeElement.style.color = "#FAFAD2";
+                        }
+                        break;
+
+                    case "item": {
+                        // doesn't account for prog+useful or other combinations, but this is just as an example
+                        if (node.item.progression) {
+                            nodeElement.style.color = "#AF99EF";
+                        } else if (node.item.useful) {
+                            nodeElement.style.color = "#6D8BE8";
+                        } else if (node.item.trap) {
+                            nodeElement.style.color = "#FA8072";
+                        } else {
+                            nodeElement.style.color = "#00EEEE";
+                        }
+                    }
+
+                    // no special coloring needed
+                    case "text":
+                    default:
+                        break;
+                }
+
+                messageElement.appendChild(nodeElement);
+            }
+
+            chat.appendChild(messageElement);
+            messageElement.scrollIntoView(false);
+        }
+        // end chat from phar
+
+
         const form = document.getElementById("connection_details")
 
         //pico-8 related declarations
@@ -323,26 +395,35 @@ canvas{
 
 
     <div id="mainDiv">
-        <a style="color: #FF6E59;" href="https://github.com/qwint/ap-air-delivery">Source</a>
         <form id="connection_details">
-            <label for="fname">Hostname:</label>
-            <input type="text" id="Hostname" name="Hostname"><br>
+            <table><tr style="vertical-align: top;">
+                <td align="right">
+                    <label for="fname">Hostname:</label>
+                    <input type="text" id="Hostname" name="Hostname"><br>
 
-            <label for="fname">Port:</label>
-            <input type="text" id="Port" name="Port"><br>
+                    <label for="fname">Port:</label>
+                    <input type="text" id="Port" name="Port"><br>
 
-            <label for="fname">Name:</label>
-            <input type="text" id="Name" name="Name"><br><br>
-            <div class="submit-wrapper">
-                <input type="submit" value="Submit">
-                <div class="status-wrapper">
-                    <div id="status-connected" class="default-hidden">Connected</div>
-                    <div id="status-failed" class="default-hidden">Connection Failed</div>
-                    <div id="status-connecting" class="default-hidden">Connecting...</div>
-                </div>
-            </div>
+                    <label for="fname">Name:</label>
+                    <input type="text" id="Name" name="Name">
+                </td>
+
+                <td>
+                    <a style="color: #FF6E59;" href="https://github.com/qwint/ap-air-delivery">Source</a>
+                    <div class="submit-wrapper">
+                        <input type="submit" value="Submit"><br>
+                        <div class="status-wrapper">
+                            <div id="status-connected" class="default-hidden">Connected</div>
+                            <div id="status-failed" class="default-hidden">Connection Failed</div>
+                            <div id="status-connecting" class="default-hidden">Connecting...</div>
+                        </div>
+                    </div>
+                </td>
+            </tr></table>
         </form>
     </div></center></div>
+
+<div id="chat"></div>
 
     <!-- start pico cart -->
 <script type="text/javascript" src="pico-window.js">

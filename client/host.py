@@ -9,6 +9,8 @@ class Handler(http.server.SimpleHTTPRequestHandler):
         print(self.path)
         if self.path.startswith("/?") or self.path in ["/", "/pico-window.js", "/pico8-gpio-listener.js", "/index.js"]:
             super().do_GET()
+        # else:
+        #     raise Exception(f"Path {self.path} denied")
 
 
 with socketserver.TCPServer(("", PORT), Handler) as httpd:
