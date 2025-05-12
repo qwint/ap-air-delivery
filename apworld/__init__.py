@@ -5,8 +5,7 @@ from worlds.LauncherComponents import (
     components,
     Type as component_type,
     )
-#expand this eventually
-from typing import *
+from typing import Any, Callable
 
 json_world = {
     "regions": ["Menu", "main", "upper", "side", "lower"],
@@ -25,16 +24,16 @@ json_world = {
     },
     "location_map": {
         "main": {
-            "mayor delivery": ["mayor missive"], #gives key, needs lower claw letter in main
+            "mayor delivery": ["mayor missive"],  # gives key, needs lower claw letter in main
             "mayor chat": None,
-            "friend delivery": ["friend freight"], #gives nothing, needs upper claw letter in main
+            "friend delivery": ["friend freight"],  # gives nothing, needs upper claw letter in main
             "friend chat": None,
-            "climber delivery": ["climber cargo"], #gives claw, needs free letter in main
+            "climber delivery": ["climber cargo"],  # gives claw, needs free letter in main
             "climber chat": None,
-            "climber cargo": None, #all the way to the right
-            "friend freight": "claw OR fly", # OR fly  #in town, above
-            "mayor missive": ["claw"], #top path from ladder to under
-            "buried bento": ["drill", "claw"], #middle path from ladder to under
+            "climber cargo": None,  # all the way to the right
+            "friend freight": "claw OR fly",  # OR fly  #in town, above
+            "mayor missive": ["claw"],  # top path from ladder to under
+            "buried bento": ["drill", "claw"],  # middle path from ladder to under
         },
 
         "side": {
@@ -42,20 +41,20 @@ json_world = {
         },
 
         "lower": {
-            "wife word": ["fly", "claw"], #in cave after door
-            "paper pack": None, #down stairs by door, between bottom and side
-            "driller delivery": ["driller dispatch"], #gives drill, needs letter in upper
+            "wife word": ["fly", "claw"],  # in cave after door
+            "paper pack": None,  # down stairs by door, between bottom and side
+            "driller delivery": ["driller dispatch"],  # gives drill, needs letter in upper
             "driller chat": None,
-            "paper folder delivery": ["paper pack"], #gives fly, needs free letter between bottom/side
+            "paper folder delivery": ["paper pack"],  # gives fly, needs free letter between bottom/side
             "paper folder chat": None,
-            "mouse delivery": ["buried bento", "fly"], #gives nothing, needs drill letter by ladder to under
+            "mouse delivery": ["buried bento", "fly"],  # gives nothing, needs drill letter by ladder to under
             "mouse chat": ["fly"],
-            "history haul": ["fly", "claw"], #left side before old man
+            "history haul": ["fly", "claw"],  # left side before old man
             "grandpa delivery": ["grandpa goods", "fly", "claw", "drill"],
             "grandpa chat": ["fly", "claw", "drill"],
-            "history buff delivery": ["history haul"], #left side of under-town, needs letter by old man
+            "history buff delivery": ["history haul"],  # left side of under-town, needs letter by old man
             "history buff chat": None,
-            "wife delivery": ["wife word"], #gives nothing, middle of under-town, needs letter after keydoor
+            "wife delivery": ["wife word"],  # gives nothing, middle of under-town, needs letter after keydoor
             "wife chat": None,
         },
 
@@ -100,7 +99,7 @@ components.append(Component(
     func=open_page,
     component_type=component_type.HIDDEN,
     supports_uri=True,
-    game_name="Air Delivery"
+    game_name=json_world["game_name"]
     ))
 
 
@@ -124,14 +123,16 @@ class DeliveryWeb(WebWorld):
     tutorials = [setup_en]
 
 
-#flatten lists of locations and items so they are indexed for name_to_id
+# flatten lists of locations and items so they are indexed for name_to_id
 location_list = [location for locations in json_world["location_map"].values() for location in locations.keys()]
 item_list = [item for item_lists in json_world["items"].values() for item in item_lists]
 
 
 class DeliveryWorld(World):
     """
-    You’re a sky-island delivery worker delivering mail to all the nearby islands. Everything runs smoothly until the letters suddenly aren’t being delivered. Find all of the letters and deliver them to their recipients. Maybe they’ll give you something as a thank you.
+    You’re a sky-island delivery worker delivering mail to all the nearby islands. Everything runs smoothly until the
+    letters suddenly aren’t being delivered. Find all of the letters and deliver them to their recipients.
+    Maybe they’ll give you something as a thank you.
     """
     game = json_world["game_name"]
     web = DeliveryWeb()
@@ -157,44 +158,62 @@ class DeliveryWorld(World):
             }
     }
 
-#basic getters for json_world data, any option based modifications can be done here; may cache these later
-#expect authors to modify the return of super() per options, or fully override if their format is different
-    def get_region_list(self) -> List[str]:
+# basic getters for json_world data, any option based modifications can be done here; may cache these later
+# expect authors to modify the return of super() per options, or fully override if their format is different
+    def get_region_list(self) -> list[str]:
         return json_world["regions"]
 
-    def get_connections(self) -> "List[Tuple(str, str, Optional[Any])]":
+    def get_connections(self) -> list[tuple[str, str, Any | None]]:
         er = False
         if er:
-            vanilla_connections = [(region1, region2, rule) for region1, connections in json_world["region_map"].items() for region2, rule in connections.items()]
+            vanilla_connections = [
+                (region1, region2, rule)
+                for region1, connections in json_world["region_map"].items()
+                for region2, rule in connections.items()
+            ]
             oneways = ["Menu -> main"]
-            return_connections = vanilla_connections + [(region2, region1, rule) for connection in vanilla_connections for region1, region2, rule in connection if f"{region1} -> {region2}" not in oneways]
+            return_connections = vanilla_connections + [
+                (region2, region1, rule)
+                for connection in vanilla_connections
+                for region1, region2, rule in connection
+                if f"{region1} -> {region2}" not in oneways
+            ]
             # then create unconnected Entrances later
         else:
-            return [(region1, region2, rule) for region1, connections in json_world["region_map"].items() for region2, rule in connections.items()]
+            return [
+                (region1, region2, rule)
+                for region1, connections in json_world["region_map"].items()
+                for region2, rule in connections.items()
+            ]
 
-    def get_location_map(self) -> "List[Tuple(str, str, Optional[Any])]":
-        return [(region, location, rule) for region, placements in json_world["location_map"].items() for location, rule in placements.items()]
+    def get_location_map(self) -> list[tuple[str, str, Any | None]]:
+        return [
+            (region, location, rule)
+            for region, placements in json_world["location_map"].items()
+            for location, rule in placements.items()
+        ]
 
 # black box methods
     def set_victory(self) -> None:
-        #current black box to set and setup victory condition, run after all region/locations have been created (but currently before items)
+        # current black box to set and setup victory condition,
+        # run after all region/locations have been created (but currently before items)
         victory = self.multiworld.get_location("victory", self.player)
         victory.address = None
         victory.place_locked_item(TemplateItem("victory", ItemClassification.progression, None, self.player))
         self.multiworld.completion_condition[self.player] = lambda state: state.has("victory", self.player)
-        #currently finds victory location, adds locked victory event, and requires victory event for completion
+        # currently finds victory location, adds locked victory event, and requires victory event for completion
 
     def create_rule(self, rule: Any) -> Callable[[CollectionState], bool]:
-        #current black box to convert json_world rule format to an access_rule lambda
+        # current black box to convert json_world rule format to an access_rule lambda
         if rule == "claw OR fly":
             return lambda state: state.has_any(["claw", "fly"], self.player)
         return lambda state: state.has_all(rule, self.player)
-        #currently all my rule objects are None or a list of required items
+        # currently all my rule objects are None or a list of required items
 
-    def get_item_list(self) -> List[str]:
-        #current black box to creat a list of item names per count that need to be created
+    def get_item_list(self) -> list[str]:
+        # current black box to creat a list of item names per count that need to be created
         return item_list
-        #currently my items in my datapackage should all be created once, so this list functions
+        # currently my items in my datapackage should all be created once, so this list functions
 
     def get_item_classification(self, name: str) -> ItemClassification:
         if name in json_world["items"]["prog_items"]:
@@ -205,19 +224,20 @@ class DeliveryWorld(World):
             return ItemClassification.useful
 
     def get_filler_item_name(self) -> str:
-        #filler_name should be a list and this should choose with self.random
+        # filler_name should be a list and this should choose with self.random
         return json_world["filler_name"]
 
 # common methods
     def create_regions(self) -> None:
-        #create a local map of get_region_list names to region object for referencing in create_regions and adding those regions to the multiworld
+        # create a local map of get_region_list names to region object
+        # for referencing in create_regions and adding those regions to the multiworld
         regions = {region: None for region in self.get_region_list()}
         for region in regions.keys():
             regions[region] = Region(region, self.player, self.multiworld)
             self.multiworld.regions.append(regions[region])
 
-        #TODO - add per option GER handling
-        #loop through get_region_map, adding the rules per self.create_rule(rule) if present to the connections
+        # TODO - add per option GER handling
+        # loop through get_region_map, adding the rules per self.create_rule(rule) if present to the connections
         for region1, region2, rule in self.get_connections():
             if rule:
                 regions[region1].connect(regions[region2], rule=self.create_rule(rule))
@@ -229,11 +249,10 @@ class DeliveryWorld(World):
                 cons = [regions[region].create_exit(connection), regions[region].create_en_target(connection)]
                 for con in cons:
                     con.er_type = EntranceType.TWO_WAY
-                    # con.er_group = 
+                    # con.er_group =
                     con.access_rule = self.create_rule(rule)
 
-
-        #loop through get_location_map, adding the rules per self.create_rule(rule) if present to the location
+        # loop through get_location_map, adding the rules per self.create_rule(rule) if present to the location
         for region, location, rule in self.get_location_map():
             loc = TemplateLocation(self.player, location, self.location_name_to_id[location], regions[region])
             if rule:
@@ -243,12 +262,12 @@ class DeliveryWorld(World):
         self.set_victory()
 
     def create_items(self) -> None:
-        #create all items in get_item_list()
+        # create all items in get_item_list()
         itempool = []
         for item in self.get_item_list():
             itempool.append(self.create_item(item))
 
-        #fill in any difference in itempool with filler item and submit to multiworld
+        # fill in any difference in itempool with filler item and submit to multiworld
         total_locations = len(self.multiworld.get_unfilled_locations(self.player))
         while len(itempool) < total_locations:
             itempool.append(self.create_filler())
