@@ -6,6 +6,7 @@ from worlds.LauncherComponents import (
     Type as component_type,
     )
 from typing import Any, Callable
+from collections import defaultdict
 
 json_world = {
     "region_map": {
@@ -145,6 +146,12 @@ class DeliveryWeb(WebWorld):
 location_list = [location for locations in json_world["location_map"].values() for location in locations.keys()]
 item_list = [item for item_lists in json_world["items"].values() for item in item_lists]
 
+# for my particular get_item_classification
+classification_lookup = defaultdict(lambda: ItemClassification.useful, {
+    **{n: ItemClassification.progression for n in json_world["items"]["prog_items"]},
+    **{n: ItemClassification.filler for n in json_world["items"]["filler_items"]}
+})
+
 
 class DeliveryWorld(World):
     """
@@ -228,12 +235,7 @@ class DeliveryWorld(World):
         """
         current black box to convert item names to their respective ItemClassification
         """
-        if name in json_world["items"]["prog_items"]:
-            return ItemClassification.progression
-        elif name in json_world["items"]["filler_items"]:
-            return ItemClassification.filler
-        else:
-            return ItemClassification.useful
+        return classification_lookup[name]
 
     def get_filler_item_name(self) -> str:
         # filler_name should be a list and this should choose with self.random
