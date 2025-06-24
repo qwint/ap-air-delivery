@@ -165,6 +165,8 @@ class DeliveryWorld(World):
     item_name_to_id = {name: json_world["base_id"]+item_list.index(name) for name in item_list}
     item_name_groups = {name: set(items) for name, items in json_world["item_name_groups"].items()}
 
+    ut_can_gen_without_yaml = True
+
 # basic getters for json_world data, any option based modifications can be done here; may cache these later
 # expect authors to modify the return of super() per options, or fully override if their format is different
     def get_region_list(self) -> list[str]:
