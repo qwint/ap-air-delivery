@@ -123,14 +123,6 @@ canvas{
         }, {});
         //console.log({data});
         //insert values by matching input name to data object key
-        if ("Protocol" in data) {
-            var pro = data["Protocol"].split("://").pop().split("@")
-            data["Hostname"] = pro[1].split(":")[0]
-            data["Port"] = pro[1].split(":")[1]
-            data["Name"] = pro[0].split(":")[0]
-            data["Password"] = pro[0].split(":")[1] !== "None" ? pro[0].split(":")[1] : ''
-        }
-
         const fillable_forms = ["Hostname", "Port", "Name", "Password"]
         for (var index in fillable_forms) {
             const key = fillable_forms[index]
@@ -338,7 +330,12 @@ canvas{
             var conn_options = {
                 password: password ? password : null
             }
-
+            if ("Protocol" in data && password == null) {
+                var pro = data["Protocol"].split("://").pop().split("@")
+                url = pro[1]
+                slot = pro[0].split(":")[0]
+                conn_options["password"] = pro[0].split(":")[1]
+            }
             console.log(url)
             console.log(slot)
 
