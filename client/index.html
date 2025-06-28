@@ -326,9 +326,9 @@ canvas{
             }
             var url = document.getElementById("Hostname").value + ":" + document.getElementById("Port").value
             var slot = document.getElementById("Name").value
-            var password = document.getElementById("Password").value
+            var password = document.getElementById("Password").value ? document.getElementById("Password").value : null
             var conn_options = {
-                password: password ? password : null
+                password: password
             }
             if ("Protocol" in data) {
                 var pro = data["Protocol"].split("://").pop().split("@")
