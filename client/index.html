@@ -330,11 +330,11 @@ canvas{
             var conn_options = {
                 password: password ? password : null
             }
-            if ("Protocol" in data && password == null) {
+            if ("Protocol" in data) {
                 var pro = data["Protocol"].split("://").pop().split("@")
                 url = pro[1]
                 slot = pro[0].split(":")[0]
-                conn_options["password"] = pro[0].split(":")[1]
+                conn_options["password"] = password ?? pro[0].split(":")[1]
             }
             console.log(url)
             console.log(slot)
