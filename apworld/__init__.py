@@ -135,7 +135,7 @@ class DeliveryWeb(WebWorld):
         "setup",
         "A guide for setting up Air Delivery for AP",
         "en",
-        "docs/setup_en.md",
+        "setup_en.md",
         "setup/en",
         ["qwint"]
     )
