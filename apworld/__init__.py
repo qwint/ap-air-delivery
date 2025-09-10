@@ -10,12 +10,9 @@ from collections import defaultdict
 
 json_world = {
     "region_map": {
-        "Menu": {
-            "main": None
-        },
         "main": {
             "upper": [["claw"]],
-            "side": [["fly", "claw"]],
+            "side": [["fly"]],
             "lower": [["key"]]
         },
         "side": {
@@ -164,6 +161,7 @@ class DeliveryWorld(World):
     location_name_to_id = {name: json_world["base_id"]+location_list.index(name) for name in location_list}
     item_name_to_id = {name: json_world["base_id"]+item_list.index(name) for name in item_list}
     item_name_groups = {name: set(items) for name, items in json_world["item_name_groups"].items()}
+    origin_region_name = "main"
 
     ut_can_gen_without_yaml = True
 
