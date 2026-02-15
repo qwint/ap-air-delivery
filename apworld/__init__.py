@@ -11,53 +11,68 @@ from rule_builder.rules import Rule, Or, HasAll, Has
 json_world = {
     "region_map": {
         "main": {
-            "upper": [["claw"]],
-            "side": [["fly"]],
-            "lower": [["key"]]
+            "upper": {"rule": "Has", "args": {"item_name": "claw"}},
+            "side": {"rule": "Has", "args": {"item_name": "fly"}},
+            "lower": {"rule": "Has", "args": {"item_name": "key"}},
         },
         "side": {
-            "lower": [["fly"]]
+            "lower": {"rule": "Has", "args": {"item_name": "fly"}},
         }
     },
     "location_map": {
         "main": {
-            "mayor delivery": [["mayor missive"]],  # gives key, needs lower claw letter in main
+            "mayor delivery": {"rule": "Has", "args": {"item_name": "mayor missive"}},
+            # gives key, needs lower claw letter in main
             "mayor chat": None,
-            "friend delivery": [["friend freight"]],  # gives nothing, needs upper claw letter in main
+            "friend delivery": {"rule": "Has", "args": {"item_name": "friend freight"}},
+            # gives nothing, needs upper claw letter in main
             "friend chat": None,
-            "climber delivery": [["climber cargo"]],  # gives claw, needs free letter in main
+            "climber delivery": {"rule": "Has", "args": {"item_name": "climber cargo"}},
+            # gives claw, needs free letter in main
             "climber chat": None,
-            "climber cargo": None,  # all the way to the right
-            "friend freight": [["claw"], ["fly"]],  # claw OR fly  #in town, above
-            "mayor missive": [["claw"]],  # top path from ladder to under
-            "buried bento": [["drill", "claw"]],  # middle path from ladder to under
+            "climber cargo": None,
+            # all the way to the right
+            "friend freight": {"rule": "HasAny", "args": {"item_names": ["claw", "fly"]}},
+            # claw OR fly  #in town, above
+            "mayor missive": {"rule": "Has", "args": {"item_name": "claw"}},
+            # top path from ladder to under
+            "buried bento": {"rule": "HasAll", "args": {"item_names": ["drill", "claw"]}},
+            # middle path from ladder to under
         },
 
         "side": {
-            "grandpa goods": [["fly"]],
+            "grandpa goods": {"rule": "Has", "args": {"item_name": "fly"}},
         },
 
         "lower": {
-            "wife word": [["fly", "claw"]],  # in cave after door
-            "paper pack": None,  # down stairs by door, between bottom and side
-            "driller delivery": [["driller dispatch"]],  # gives drill, needs letter in upper
+            "wife word": {"rule": "HasAll", "args": {"item_names": ["fly", "claw"]}},
+            # in cave after door
+            "paper pack": None,
+            # down stairs by door, between bottom and side
+            "driller delivery": {"rule": "Has", "args": {"item_name": "driller dispatch"}},
+            # gives drill, needs letter in upper
             "driller chat": None,
-            "paper folder delivery": [["paper pack"]],  # gives fly, needs free letter between bottom/side
+            "paper folder delivery": {"rule": "Has", "args": {"item_name": "paper pack"}},
+            # gives fly, needs free letter between bottom/side
             "paper folder chat": None,
-            "mouse delivery": [["buried bento", "fly"]],  # gives nothing, needs drill letter by ladder to under
-            "mouse chat": [["fly"]],
-            "history haul": [["fly", "claw"]],  # left side before old man
-            "grandpa delivery": [["grandpa goods", "fly", "claw", "drill"]],
-            "grandpa chat": [["fly", "claw", "drill"]],
-            "history buff delivery": [["history haul"]],  # left side of under-town, needs letter by old man
+            "mouse delivery": {"rule": "HasAll", "args": {"item_names": ["buried bento", "fly"]}},
+            # gives nothing, needs drill letter by ladder to under
+            "mouse chat": {"rule": "Has", "args": {"item_name": "fly"}},
+            "history haul": {"rule": "HasAll", "args": {"item_names": ["fly", "claw"]}},
+            # left side before old man
+            "grandpa delivery": {"rule": "HasAll", "args": {"item_names": ["grandpa goods", "fly", "claw", "drill"]}},
+            "grandpa chat": {"rule": "HasAll", "args": {"item_names": ["fly", "claw", "drill"]}},
+            "history buff delivery": {"rule": "Has", "args": {"item_name": "history haul"}},
+            # left side of under-town, needs letter by old man
             "history buff chat": None,
-            "wife delivery": [["wife word"]],  # gives nothing, middle of under-town, needs letter after keydoor
+            "wife delivery": {"rule": "Has", "args": {"item_name": "wife word"}},
+            # gives nothing, middle of under-town, needs letter after keydoor
             "wife chat": None,
         },
 
         "upper": {
             "driller dispatch": None,
-            "victory": [["drill", "fly"]],
+            "victory": {"rule": "HasAll", "args": {"item_names": ["drill", "fly"]}},
         }
     },
     "items": {
@@ -185,7 +200,7 @@ class DeliveryWorld(World):
         """
         return {
             region1: {
-                region2: None if rule is None else Or(*[HasAll(*inner) for inner in rule]).resolve(self)  # only resolving because the helper we use don't do it for us
+                region2: None if rule is None else self.rule_from_dict(rule).resolve(self)  # only resolving because the helper we use don't do it for us
                 for region2, rule in connections.items()
                 }
             for region1, connections in json_world["region_map"].items()
@@ -198,7 +213,7 @@ class DeliveryWorld(World):
         """
         return {
             region: {
-                location: None if rule is None else Or(*[HasAll(*inner) for inner in rule])
+                location: None if rule is None else self.rule_from_dict(rule)
                 for location, rule in placements.items()
                 }
             for region, placements in json_world["location_map"].items()
