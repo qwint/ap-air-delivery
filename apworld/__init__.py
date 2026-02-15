@@ -1,12 +1,12 @@
-from BaseClasses import Region, Location, Item, ItemClassification, Tutorial, CollectionState
+from BaseClasses import Region, Location, Item, ItemClassification, Tutorial
 from worlds.AutoWorld import World, WebWorld
 from worlds.LauncherComponents import (
     Component,
     components,
     Type as component_type,
     )
-from typing import Any, Callable
 from collections import defaultdict
+from rule_builder.rules import Rule, Or, HasAll, Has
 
 json_world = {
     "region_map": {
@@ -178,27 +178,31 @@ class DeliveryWorld(World):
         }.union(json_world["region_map"].keys())
         return ret
 
-    def get_connections(self) -> list[tuple[str, str, Any | None]]:
+    def get_connections(self) -> dict[str, dict[str, Rule | None]]:
         """
         Parser method to convert the region definitions in the json_world object
-        into a list of connection entries formatted as (parent_region_name, target_region_name, rule)
+        into a dict of connection entries formatted as {parent_region_name: {target_region_name: rule}}
         """
-        return [
-            (region1, region2, rule)
+        return {
+            region1: {
+                region2: None if rule is None else Or(*[HasAll(*inner) for inner in rule]).resolve(self)  # only resolving because the helper we use don't do it for us
+                for region2, rule in connections.items()
+                }
             for region1, connections in json_world["region_map"].items()
-            for region2, rule in connections.items()
-        ]
+        }
 
-    def get_location_map(self) -> list[tuple[str, str, Any | None]]:
+    def get_location_map(self) -> dict[str, dict[str, Rule | None]]:
         """
         Parser method to convert the location definitions in the json_world object
-        into a list of location entries formatted as (parent_region_name, location_name, rule)
+        into a list of location entries formatted as {parent_region_name: {location_name: rule}}
         """
-        return [
-            (region, location, rule)
+        return {
+            region: {
+                location: None if rule is None else Or(*[HasAll(*inner) for inner in rule])
+                for location, rule in placements.items()
+                }
             for region, placements in json_world["location_map"].items()
-            for location, rule in placements.items()
-        ]
+        }
 
 # black box methods
     def set_victory(self) -> None:
@@ -209,20 +213,8 @@ class DeliveryWorld(World):
         victory = self.get_location("victory")
         victory.address = None
         victory.place_locked_item(TemplateItem("victory", ItemClassification.progression, None, self.player))
-        self.multiworld.completion_condition[self.player] = lambda state: state.has("victory", self.player)
+        self.set_completion_rule(Has("victory"))
         # currently finds victory location, adds locked victory event, and requires victory event for completion
-
-    def create_rule(self, rule: Any) -> Callable[[CollectionState], bool]:
-        """
-        current black box to convert json_world rule format to an access_rule lambda
-        Falsy rules will be ignored and left default
-        """
-        if len(rule) > 1:
-            rules = [lambda state: state.has_all(sub, self.player) for sub in rule]
-            return lambda state: any(r(state) for r in rules)
-        # optimize for the more common one route rules
-        return lambda state: state.has_all(rule[0], self.player)
-        # currently all my rule objects are None or a list of potential routes with each having a list of required items
 
     def get_item_list(self) -> list[str]:
         """
@@ -250,19 +242,17 @@ class DeliveryWorld(World):
             regions[region] = Region(region, self.player, self.multiworld)
             self.multiworld.regions.append(regions[region])
 
-        # loop through get_region_map, adding the rules per self.create_rule(rule) if present to the connections
-        for region1, region2, rule in self.get_connections():
-            if rule:
-                regions[region1].connect(regions[region2], rule=self.create_rule(rule))
-            else:
-                regions[region1].connect(regions[region2])
+        # loop through get_region_map, letting add_exits add rules if present
+        for region, connections in self.get_connections().items():
+            regions[region].add_exits(connections.keys(), connections.values())
 
-        # loop through get_location_map, adding the rules per self.create_rule(rule) if present to the location
-        for region, location, rule in self.get_location_map():
-            loc = TemplateLocation(self.player, location, self.location_name_to_id[location], regions[region])
-            if rule:
-                loc.access_rule = self.create_rule(rule)
-            regions[region].locations.append(loc)
+        # loop through get_location_map, adding the rules if present to the location
+        for region, placements in self.get_location_map().items():
+            for location, rule in placements.items():
+                loc = TemplateLocation(self.player, location, self.location_name_to_id[location], regions[region])
+                if rule is not None:
+                    self.set_rule(loc, rule)
+                regions[region].locations.append(loc)
 
         self.set_victory()
 
@@ -278,5 +268,8 @@ class DeliveryWorld(World):
         self.multiworld.itempool += itempool
 
     def create_item(self, name: str) -> "Item":
-        item_class = self.get_item_classification(name)
-        return TemplateItem(name, item_class, self.item_name_to_id.get(name, None), self.player)
+        return TemplateItem(
+            name,
+            self.get_item_classification(name),
+            self.item_name_to_id.get(name, None),
+            self.player)
