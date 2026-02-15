@@ -244,7 +244,7 @@ class DeliveryWorld(World):
 
         # loop through get_region_map, letting add_exits add rules if present
         for region, connections in self.get_connections().items():
-            regions[region].add_exits(connections.keys(), connections.values())
+            regions[region].add_exits(connections.keys(), connections)
 
         # loop through get_location_map, adding the rules if present to the location
         for region, placements in self.get_location_map().items():
