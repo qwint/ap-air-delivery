@@ -185,7 +185,7 @@ class DeliveryWorld(World):
         """
         return {
             region1: {
-                region2: None if rule is None else Or(*[HasAll(*inner) for inner in rule]).resolve(self)  # only resolving because the helper we use don't do it for us
+                region2: None if rule is None else Or(*[HasAll(*inner) for inner in rule])
                 for region2, rule in connections.items()
                 }
             for region1, connections in json_world["region_map"].items()
